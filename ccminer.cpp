@@ -1041,7 +1041,7 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 			}
 
 			val = json_rpc_call_pool(curl, pool, req, false, false, NULL);
-			print_json_object(val,4);
+			//print_json_object(val,4);
 			free(req);
 			if (unlikely(!val)) {
 				applog(LOG_ERR, "submit_upstream_work json_rpc_call failed");
