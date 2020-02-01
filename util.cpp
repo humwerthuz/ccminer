@@ -532,6 +532,7 @@ static json_t *json_rpc_call(CURL *curl, const char *url,
 	}
 
 	httpdata = (char*) all_data.buf;
+	//printf("json_rpc_call: data: %s\n",httpdata);
 
 	if (*httpdata != '{' && *httpdata != '[') {
 		long errcode = 0;
@@ -560,7 +561,7 @@ static json_t *json_rpc_call(CURL *curl, const char *url,
 	 * and a null 'error'. */
 	res_val = json_object_get(val, "result");
 	err_val = json_object_get(val, "error");
-
+/*
 	if (!res_val || json_is_null(res_val) ||
 	    (err_val && !json_is_null(err_val))) {
 		char *s = NULL;
@@ -593,7 +594,7 @@ static json_t *json_rpc_call(CURL *curl, const char *url,
 
 		goto err_out;
 	}
-
+*/
 	if (hi.reason)
 		json_object_set_new(val, "reject-reason", json_string(hi.reason));
 
