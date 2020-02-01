@@ -917,9 +917,32 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 	bool stale_work = false;
 	int idnonce = work->submit_nonce_id;
 
+	if (pool->type & POOL_STRATUM && stratum.rpc2) {
+		struct work submit_work;
+		memcpy(&submit_work, work, sizeof(struct work));
+		if (!hashlog_already_submittted(submit_work.job_id, submit_work.nonces[idnonce])) {
+			if (rpc2_stratum_submit(pool, &submit_work))
+				hashlog_remember_submit(&submit_work, submit_work.nonces[idnonce]);
+			stratum.job.shares_count++;
+		}
+		return true;
+	}
+
+	if (pool->type & POOL_STRATUM && stratum.is_equihash) {
+		struct work submit_work;
+		memcpy(&submit_work, work, sizeof(struct work));
+		//if (!hashlog_already_submittted(submit_work.job_id, submit_work.nonces[idnonce])) {
+			if (equi_stratum_submit(pool, &submit_work))
+				hashlog_remember_submit(&submit_work, submit_work.nonces[idnonce]);
+			stratum.job.shares_count++;
+		//}
+		return true;
+	}
+
+
 	/* discard if a newer block was received */
 	stale_work = work->height && work->height < g_work.height;
-	/*
+	
 	if (have_stratum && !stale_work && !opt_submit_stale && opt_algo != ALGO_ZR5 && opt_algo != ALGO_SCRYPT_JANE) {
 		pthread_mutex_lock(&g_work_lock);
 		if (strlen(work->job_id + 8))
@@ -935,7 +958,7 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		}
 		pthread_mutex_unlock(&g_work_lock);
 	}
-	*/
+	
 	if (!have_stratum && !stale_work && allow_gbt) {
 		struct work wheight = { 0 };
 		if (get_blocktemplate(curl, &wheight)) {
@@ -958,6 +981,9 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		uint32_t ntime, nonce = work->nonces[idnonce];
 		char *ntimestr, *noncestr, *xnonce2str, *nvotestr;
 		uint16_t nvote = 0;
+
+		le32enc(&ntime, work->data[17]);
+		le32enc(&nonce, work->data[19]);
 
 		noncestr = bin2hex((const uchar*)(&nonce), 4);
 
